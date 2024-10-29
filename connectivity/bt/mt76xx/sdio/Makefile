@@ -18,10 +18,3 @@ obj-m += $(MODULE_NAME).o
 
 $(MODULE_NAME)-objs += btmtk_sdio.o \
                        btmtk_main.o
-
-
-ifneq ($(TARGET_BUILD_VARIANT), user)
-	ccflags-y += -DCFG_ENABLE_DEBUG_WRITE=1
-else
-	ccflags-y += -DCFG_ENABLE_DEBUG_WRITE=0
-endif

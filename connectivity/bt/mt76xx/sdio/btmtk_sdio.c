@@ -7019,9 +7019,6 @@ static ssize_t btmtk_fops_writefwlog(
 			struct file *filp, const char __user *buf,
 			size_t count, loff_t *f_pos)
 {
-#if (CFG_ENABLE_DEBUG_WRITE == 0)
-	return -ENODEV;
-#else
 	struct sk_buff *skb = NULL;
 	int i = 0, len = 0, val = 0, ret = -1;
 	/*+1 is for i_fwlog_buf[count] = 0, end string byte*/
@@ -7055,7 +7052,7 @@ static ssize_t btmtk_fops_writefwlog(
 	}
 
 	i_fwlog_buf = kmalloc(i_fwlog_buf_size, GFP_KERNEL);
-	o_fwlog_buf = kmalloc(HCI_MAX_COMMAND_SIZE + 16, GFP_KERNEL);
+	o_fwlog_buf = kmalloc(HCI_MAX_COMMAND_SIZE, GFP_KERNEL);
 
 	if (i_fwlog_buf == NULL || o_fwlog_buf == NULL) {
 		BTMTK_ERR("buf alloc fail");
@@ -7064,7 +7061,7 @@ static ssize_t btmtk_fops_writefwlog(
 	}
 
 	memset(i_fwlog_buf, 0, i_fwlog_buf_size);
-	memset(o_fwlog_buf, 0, HCI_MAX_COMMAND_SIZE + 16);
+	memset(o_fwlog_buf, 0, HCI_MAX_COMMAND_SIZE);
 
 	if (count > HCI_MAX_COMMAND_BUF_SIZE) {
 		BTMTK_ERR("your command is larger than maximum length, count = %zd", count);
@@ -7216,10 +7213,6 @@ static ssize_t btmtk_fops_writefwlog(
 			BTMTK_ERR("There is an invalid input(%c)", *pos);
 			count = -EINVAL;
 			goto exit;
-		} else if (len + 1 >= HCI_MAX_COMMAND_SIZE) {
-			BTMTK_ERR("%s: input data exceed maximum command length (%d)", __func__, len);
-			count = -EINVAL;
-			goto exit;
 		}
 		temp_str[0] = *pos;
 		temp_str[1] = *(pos + 1);
@@ -7313,7 +7306,6 @@ exit:
 	if (g_priv)
 		up(&g_priv->wr_fwlog_mtx);
 	return count;
-#endif
 }
 
 static unsigned int btmtk_fops_pollfwlog(
