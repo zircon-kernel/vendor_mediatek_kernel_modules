@@ -16,9 +16,6 @@
 #include "gps_dl_hist_rec.h"
 #include "gps_dl_linux_plat_drv.h"
 #include "gps_dl_hw_api.h"
-#if GPS_DL_GET_PLATFORM_CLOCK_FREQ
-#include "gps_dl_linux_clock_mng.h"
-#endif
 
 static ssize_t gps_each_device_read(struct file *filp,
 	char __user *buf, size_t count, loff_t *f_pos)
@@ -160,15 +157,11 @@ static int gps_each_device_open(struct inode *inode, struct file *filp)
 		if (0 == retval) {
 			dev->is_open = true;
 			gps_each_link_rec_reset(dev->index);
-			return 0;
 		} else
 			return retval;
 	}
 
-	GDL_LOGXW(dev->index, "major = %d, minor = %d, pid = %d, reopen fail",
-		imajor(inode), iminor(inode), current->pid);
-
-	return -EBUSY;
+	return 0;
 }
 
 static int gps_each_device_hw_resume(enum gps_dl_link_id_enum link_id, bool revert_for_mvcd)
@@ -240,11 +233,6 @@ static int gps_each_device_hw_suspend(enum gps_dl_link_id_enum link_id, bool nee
 #define GPSDL_IOC_GPS_CWDSP_MVCD_FRAGEMENT_NO 26
 #define GPSDL_IOC_GPS_CTRL_L5_LNA      27
 #define GPSDL_IOC_GPS_GET_BOOT_TIME    28
-#if 0
-#define GPSDL_IOC_GPS_EAP_SAP_TIMESYNC 29
-#endif
-#define GPSDL_IOC_GET_PLATFORM_CLOCK_FREQ     30
-
 static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsigned long arg, bool is_compat)
 {
 	struct gps_each_device *dev; /* device information */
@@ -451,12 +439,6 @@ static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsi
 	{
 		struct gps_dl_hw_mvcd_gps_bootup_info bootup_info;
 
-		if (!dev->is_open) {
-			retval = -EFAULT;
-			GDL_LOGXI_ONF(dev->index,
-				"GPSDL_IOC_GPS_GET_DSP_BOOTUP_INFO retval = %d, is_open = %d", retval, dev->is_open);
-			break;
-		}
 		if (gps_dl_hw_gps_get_bootup_info((enum gps_dl_link_id_enum)dev->index, 0, &bootup_info)) {
 			if (copy_to_user((int __user *)arg, &bootup_info, sizeof(bootup_info)))
 				retval = -EFAULT;
@@ -471,12 +453,6 @@ static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsi
 	{
 		struct gps_dl_hw_mvcd_gps_bootup_info bootup_info;
 
-		if (!dev->is_open) {
-			retval = -EFAULT;
-			GDL_LOGXI_ONF(dev->index,
-				"GPSDL_IOC_GPS_GET_CWDSP_BOOTUP_INFO retval = %d, is_open = %d", retval, dev->is_open);
-			break;
-		}
 		if (gps_dl_hw_gps_get_bootup_info((enum gps_dl_link_id_enum)dev->index, 1, &bootup_info)) {
 			if (copy_to_user((int __user *)arg, &bootup_info, sizeof(bootup_info)))
 				retval = -EFAULT;
@@ -488,35 +464,17 @@ static int gps_each_device_ioctl_inner(struct file *filp, unsigned int cmd, unsi
 		break;
 	}
 	case GPSDL_IOC_GPS_DSP_MVCD_FRAGEMENT_NO:
-		if (!dev->is_open) {
-			retval = -EFAULT;
-			GDL_LOGXI_ONF(dev->index,
-				"GPSDL_IOC_GPS_DSP_MVCD_FRAGEMENT_NO retval = %d, is_open = %d", retval, dev->is_open);
-			break;
-		}
 		if (gps_dl_hw_gps_send_dsp_fragement_num((enum gps_dl_link_id_enum)dev->index, 0, (unsigned int)arg))
 			retval = 0;
 		else
 			retval = -EFAULT;
 		break;
 	case GPSDL_IOC_GPS_CWDSP_MVCD_FRAGEMENT_NO:
-		if (!dev->is_open) {
-			retval = -EFAULT;
-			GDL_LOGXI_ONF(dev->index,
-				"GPSDL_IOC_GPS_CWDSP_MVCD_FRAGEMENT_NO retval = %d, is_open = %d", retval,
-				dev->is_open);
-			break;
-		}
 		if (gps_dl_hw_gps_send_dsp_fragement_num((enum gps_dl_link_id_enum)dev->index, 1, (unsigned int)arg))
 			retval = 0;
 		else
 			retval = -EFAULT;
 		break;
-#if GPS_DL_GET_PLATFORM_CLOCK_FREQ
-	case GPSDL_IOC_GET_PLATFORM_CLOCK_FREQ:
-		retval = gps_dl_clock_mng_get_platform_clock();
-		break;
-#endif
 	default:
 		retval = -EFAULT;
 		GDL_LOGXI_DRW(dev->index, "cmd = %d, not support", cmd);
@@ -573,13 +531,11 @@ int gps_dl_cdev_setup(struct gps_each_device *dev, int index)
 		return -1;
 	}
 
-#if (!GPS_DL_DISABLE_AP_MODE_DEVICENODE)
 	dev->dev = device_create(dev->cls, NULL, dev->devno, NULL, dev->cfg.dev_name);
 	if (IS_ERR(dev->dev)) {
 		GDL_LOGE("device_create fail on %s", dev->cfg.dev_name);
 		return -1;
 	}
-#endif
 
 	return 0;
 }

@@ -87,11 +87,6 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 	case GPS_MCUDL_EVT_LINK_OPEN:
 		/* show_log = gps_dl_set_show_reg_rw_log(true); */
 		/* set flag to atf */
-		if (gps_dl_hal_get_open_flag() != 0) {
-			GDL_LOGXE(link_id, "offload/ap mismatch mode");
-			gps_mcudl_link_open_ack(link_id, false);
-			break;
-		}
 		gps_mcudl_hal_may_set_link_power_flag(link_id, true);
 		gps_mcudl_each_link_inc_session_id(link_id);
 		gps_mcudl_each_link_set_active(link_id, true);
@@ -132,7 +127,6 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 		if (gps_mcusys_mnlbin_state_is(GPS_MCUSYS_MNLBIN_ST_CTLR_CREATED))
 			gps_mcudl_link_open_ack(link_id, true);
 		else {
-			gps_mcudl_each_link_set_bool_flag(link_id, LINK_MISS_MNLBIN_ACK, true);
 			/* wait gps_mcusys_mnlbin_fsm to ack it */
 			MDL_LOGXI(link_id, "bypass gps_mcudl_link_open_ack now");
 		}
@@ -196,9 +190,6 @@ void gps_mcudl_xlink_event_proc(enum gps_mcudl_xid link_id,
 	case GPS_MCUDL_EVT_LINK_CLOSE:
 	case GPS_MCUDL_EVT_LINK_RESET:
 	case GPS_MCUDL_EVT_LINK_PRE_CONN_RESET:
-		if (gps_mcudl_each_link_get_bool_flag(link_id, LINK_MISS_MNLBIN_ACK))
-			gps_mcudl_each_link_set_bool_flag(link_id, LINK_MISS_MNLBIN_ACK, false);
-
 		if (evt != GPS_MCUDL_EVT_LINK_CLOSE)
 			show_log = gps_dl_set_show_reg_rw_log(true);
 
