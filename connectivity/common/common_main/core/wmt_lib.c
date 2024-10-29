@@ -3471,16 +3471,7 @@ INT32 wmt_lib_cmd_rx_timeout_dump(VOID)
 	wmt_lib_power_lock_release();
 
 	return ret;
-}
 
-INT32 wmt_lib_cmd_pre_rx_timeout_dump(VOID)
-{
-	int ret;
-
-	WMT_INFO_FUNC("======================== ");
-	ret = mtk_wcn_consys_cmd_pre_rx_timeout_dump();
-
-	return ret;
 }
 
 INT32 wmt_lib_coredump_timeout_dump(VOID)
