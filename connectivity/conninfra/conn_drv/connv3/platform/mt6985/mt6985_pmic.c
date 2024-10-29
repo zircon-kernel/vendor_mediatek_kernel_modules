@@ -374,6 +374,7 @@ int connv3_plt_pmic_parse_state_mt6985(char *buffer, int buf_sz)
 	char log_buf[TMP_LOG_SIZE];
 	int remain_size = TMP_LOG_SIZE - 1;
 	static int g_first_dump = 1;
+	int index = 0;
 
 	if (!buffer){
 		pr_err("[%s] PMIC dump register is NULL\n", __func__);
@@ -402,13 +403,17 @@ int connv3_plt_pmic_parse_state_mt6985(char *buffer, int buf_sz)
 		strncat(log_buf, tmp, remain_size);
 		remain_size -= 3;
 		if (i > 0 && (i % 24 == 23)) {
-			pr_info("[MT6376-State] %s", log_buf);
+			if (index == 0)
+				pr_info("[MT6376-State] MT6376P_ECID %s", log_buf);
+			else
+				pr_info("[MT6376-State] MT6639A_ECID %s", log_buf);
+			index++;
 			log_buf[0] = '\0';
 			remain_size = TMP_LOG_SIZE;
 		}
 	}
 	if (strlen(log_buf) > 0)
-		pr_info("[MT6376-State] %s", log_buf);
+		pr_info("[MT6376-State] MT6639A_ECID %s", log_buf);
 
 	register_dump = buffer + 4;
 
